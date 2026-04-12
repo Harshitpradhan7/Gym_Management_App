@@ -174,6 +174,22 @@ export default function MemberProfile() {
               <p className="text-[10px] uppercase font-black text-zinc-600 mb-2 tracking-widest relative z-10">Payment Method</p>
               <p className="text-lg font-black text-brand-red uppercase italic tracking-[0.2em] relative z-10">{member.payment_mode || 'Cash Flow'}</p>
             </div>
+
+            <div className="p-6 bg-zinc-950 border border-white/5 rounded-3xl shadow-inner relative overflow-hidden group col-span-2 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] uppercase font-black text-zinc-600 mb-2 tracking-widest leading-none">ID Verification</p>
+                <h4 className="text-lg font-black text-white italic uppercase tracking-tighter leading-none mb-2">Scan Digital Key</h4>
+                <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest max-w-[140px]">Use this QR to verify entrance at the gym gate.</p>
+              </div>
+              <div className="p-4 bg-white rounded-[2rem] shadow-2xl transform group-hover:scale-110 transition-transform">
+                <QRCodeSVG
+                  value={`${window.location.origin}/verify/${id}`}
+                  size={120}
+                  level="M"
+                  includeMargin={true}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -189,14 +205,14 @@ export default function MemberProfile() {
 
       {/* 🔴 ELITE ID CARD DESIGN (HIDDEN) */}
       <div className="fixed top-[-9999px] left-[-9999px]">
-        <div ref={cardRef} className="w-[640px] h-[400px] bg-white text-black p-0 rounded-[3rem] overflow-hidden flex flex-col relative font-sans shadow-2xl">
+        <div ref={cardRef} className="w-[640px] h-[440px] bg-white text-black p-0 rounded-[3rem] overflow-hidden flex flex-col relative font-sans shadow-2xl">
           <div className="absolute inset-0 bg-white"></div>
 
           {/* Header Branding */}
           <div className="h-24 bg-black flex items-center justify-between px-10 relative z-10">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-white/10 shadow-lg">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-white/10 shadow-lg p-1">
+                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="text-white font-black italic uppercase tracking-tighter text-2xl leading-none mb-1">Bajrang <span className="text-brand-red">Gym 2.0</span></h1>
@@ -209,42 +225,49 @@ export default function MemberProfile() {
             </div>
           </div>
 
-          <div className="p-10 flex-1 flex flex-col relative z-10">
+          <div className="p-10 pb-12 flex-1 flex flex-col relative z-10">
             {/* Background Pattern Watermark */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
-              <h1 className="text-[120px] font-black uppercase italic tracking-tighter rotate-[-15deg] whitespace-nowrap">BAJRANG GYM</h1>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none -rotate-12 translate-y-12">
+              <h1 className="text-[120px] font-black uppercase italic tracking-tighter whitespace-nowrap">BAJRANG GYM</h1>
             </div>
 
-            <div className="flex justify-between items-start h-full">
-              <div className="flex flex-col h-full">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex flex-col">
                 <div className="mb-6">
                   <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-2">Registered Athlete</p>
-                  <h2 className="text-[48px] font-black uppercase italic tracking-tighter leading-tight text-black max-w-[400px] break-words -mt-2">
+                  <h2 className="text-[42px] font-black uppercase italic tracking-tighter leading-tight text-black max-w-[380px] break-words -mt-2">
                     {member.full_name}
                   </h2>
                 </div>
 
-                <div className="mt-auto grid grid-cols-2 gap-10">
+                <div className="grid grid-cols-2 gap-10">
                   <div className="flex flex-col">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-1.5 leading-none">Status Rank</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-2 leading-none">Status Rank</p>
                     <div className="flex items-center gap-2">
                       <Award size={14} className="text-brand-red" />
-                      <p className="text-lg font-black italic tracking-tighter text-black uppercase">{member.plan_type} Athlete</p>
+                      <p className="text-base font-black italic tracking-tighter text-black uppercase">{member.plan_type} Athlete</p>
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-1.5 leading-none">Mobile Link</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400 mb-2 leading-none">Mobile Link</p>
                     <div className="flex items-center gap-2">
                       <Phone size={14} className="text-zinc-600" />
-                      <p className="text-lg font-black italic tracking-tighter text-black uppercase">{member.phone}</p>
+                      <p className="text-base font-black italic tracking-tighter text-black uppercase">{member.phone}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center justify-center h-full">
-                <div className="bg-white p-4 border-2 border-zinc-50 rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.1)] relative">
-                  <QRCodeSVG value={member.qr_code_data} size={140} level="H" bgColor="#ffffff" fgColor="#000000" marginSize={0} />
+              <div className="flex flex-col items-center">
+                <div className="bg-white p-4 border-2 border-zinc-50 rounded-[2.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.1)] relative">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/verify/${id}`}
+                    size={140}
+                    level="M"
+                    includeMargin={true}
+                    bgColor="#ffffff"
+                    fgColor="#000000"
+                  />
                   <div className="absolute -top-3 -right-3 w-10 h-10 bg-brand-red rounded-full flex items-center justify-center border-4 border-white shadow-lg">
                     <ShieldCheck size={18} className="text-white" />
                   </div>
@@ -255,15 +278,15 @@ export default function MemberProfile() {
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-zinc-100 flex justify-between items-center">
-              <div className="flex items-center gap-6">
+            <div className="mt-auto pt-6 border-t border-zinc-100 flex justify-between items-end pb-2">
+              <div className="flex items-center gap-10">
                 <div>
-                  <p className="text-[7px] font-black uppercase text-zinc-400 mb-0.5">Enrolled</p>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-black">{format(parseISO(member.joining_date), 'dd/MM/yyyy')}</span>
+                  <p className="text-[7px] font-black uppercase text-zinc-400 mb-1.5">Enrolled</p>
+                  <span className="text-[12px] font-black uppercase tracking-widest text-black">{format(parseISO(member.joining_date), 'dd/MM/yyyy')}</span>
                 </div>
                 <div>
-                  <p className="text-[7px] font-black uppercase text-brand-red mb-0.5">Valid Thru</p>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-brand-red">{format(parseISO(member.expiry_date), 'dd/MM/yyyy')}</span>
+                  <p className="text-[7px] font-black uppercase text-brand-red mb-1.5">Valid Thru</p>
+                  <span className="text-[12px] font-black uppercase tracking-widest text-brand-red">{format(parseISO(member.expiry_date), 'dd/MM/yyyy')}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">

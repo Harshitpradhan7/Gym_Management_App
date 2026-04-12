@@ -8,11 +8,13 @@ import EditMember from './pages/EditMember'
 import BulkImport from './pages/BulkImport'
 import Login from './pages/Login'
 import ProtectedRoute from './components/ProtectedRoute'
+import PublicVerify from './pages/PublicVerify'
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/verify/:id" element={<PublicVerify />} />
       <Route
         path="/"
         element={
