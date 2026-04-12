@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { format, parseISO } from 'date-fns'
 import * as screenshot from 'modern-screenshot'
 import { getStatus } from '../lib/status'
+import SecurityDialog from '../components/SecurityDialog'
 
 export default function MemberProfile() {
   const { id } = useParams()
@@ -13,6 +14,7 @@ export default function MemberProfile() {
   const [member, setMember] = useState(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [isPinOpen, setIsPinOpen] = useState(false)
   const cardRef = useRef()
 
   const downloadIDCard = async () => {
@@ -60,15 +62,17 @@ export default function MemberProfile() {
     fetchMember()
   }, [id, navigate])
 
+  const handleDeleteTrigger = () => {
+    setIsPinOpen(true)
+  }
+
   const deleteMember = async () => {
-    if (window.confirm(`Are you sure you want to delete ${member.full_name}'s record? This cannot be undone.`)) {
-      try {
-        const { error } = await supabase.from('members').delete().eq('id', id)
-        if (error) throw error
-        navigate('/members')
-      } catch (err) {
-        console.error('Delete error:', err)
-      }
+    try {
+      const { error } = await supabase.from('members').delete().eq('id', id)
+      if (error) throw error
+      navigate('/members')
+    } catch (err) {
+      console.error('Delete error:', err)
     }
   }
 
@@ -94,7 +98,7 @@ export default function MemberProfile() {
           <button onClick={() => navigate(`/members/edit/${id}`)} className="w-12 h-12 flex items-center justify-center bg-zinc-900 border border-white/5 rounded-2xl text-zinc-400 hover:text-brand-red transition-all hover:scale-105 shadow-xl">
             <Edit3 size={20} />
           </button>
-          <button onClick={deleteMember} className="w-12 h-12 flex items-center justify-center bg-zinc-900 border border-white/5 rounded-2xl text-rose-500/40 hover:text-rose-500 transition-all hover:scale-105 shadow-xl">
+          <button onClick={handleDeleteTrigger} className="w-12 h-12 flex items-center justify-center bg-zinc-900 border border-white/5 rounded-2xl text-rose-500/40 hover:text-rose-500 transition-all hover:scale-105 shadow-xl">
             <Trash2 size={20} />
           </button>
         </div>
@@ -273,6 +277,13 @@ export default function MemberProfile() {
           </div>
         </div>
       </div>
+
+      <SecurityDialog
+        isOpen={isPinOpen}
+        onClose={() => setIsPinOpen(false)}
+        onVerified={deleteMember}
+        title="Delete Athlete?"
+      />
     </div>
   )
 }

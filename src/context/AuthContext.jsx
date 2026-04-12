@@ -8,7 +8,24 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Check active sessions and sets the user
+        let timeout;
+        const resetTimer = () => {
+            if (timeout) clearTimeout(timeout);
+            // 🛑 Auto-logout after 30 minutes of total inactivity
+            timeout = setTimeout(() => {
+                if (user) {
+                    console.log("Inactivity detected. Locking session...");
+                    supabase.auth.signOut();
+                    setUser(null);
+                }
+            }, 30 * 60 * 1000);
+        };
+
+        // Listen for user activity
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+        events.forEach(event => document.addEventListener(event, resetTimer));
+
+        // Initial session check
         const getSession = async () => {
             const { data: { session } } = await supabase.auth.getSession()
             setUser(session?.user ?? null)
@@ -16,17 +33,20 @@ export const AuthProvider = ({ children }) => {
         }
 
         getSession()
+        resetTimer();
 
-        // Listen for changes on auth state (logged in, signed out, etc.)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setUser(session?.user ?? null)
             setLoading(false)
+            resetTimer(); // Reset on auth changes too
         })
 
         return () => {
-            subscription.unsubscribe()
+            subscription.unsubscribe();
+            events.forEach(event => document.removeEventListener(event, resetTimer));
+            if (timeout) clearTimeout(timeout);
         }
-    }, [])
+    }, [user])
 
     const value = {
         signUp: (data) => supabase.auth.signUp(data),

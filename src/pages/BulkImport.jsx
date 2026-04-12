@@ -15,6 +15,7 @@ import Papa from 'papaparse'
 import { supabase } from '../lib/supabase'
 import { logAction } from '../lib/audit'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import SecurityDialog from '../components/SecurityDialog'
 
 export default function BulkImport() {
   const navigate = useNavigate()
@@ -22,6 +23,7 @@ export default function BulkImport() {
   const [data, setData] = useState([])
   const [success, setSuccess] = useState(0)
   const [importError, setImportError] = useState(null)
+  const [isPinOpen, setIsPinOpen] = useState(false)
 
   const downloadTemplate = () => {
     const headers = 'full_name,phone,plan_type,fees_paid,payment_mode,joining_date,expiry_date,registration_no\n'
@@ -42,120 +44,124 @@ export default function BulkImport() {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
-        // 🔥 Start sequence from a timestamp-based base to ensure uniqueness
-        let idSequence = Math.floor(Date.now() / 100000) % 10000;
+      complete: async (results) => {
+        const { data: latestMembers } = await supabase
+          .from('members')
+          .select('registration_no')
+          .order('registration_no', { ascending: false })
+          .limit(1)
 
-        const validatedData = results.data.map((row, index) => {
-          const name = row.full_name || row.Name || row['Full Name'] || ''
-          const phone = row.phone || row.Phone || row['Phone Number'] || ''
+        let lastNum = 1000
+        if (latestMembers?.[0]?.registration_no) {
+          const match = latestMembers[0].registration_no.match(/\d+/)
+          if (match) lastNum = parseInt(match[0])
+        }
 
-          // 🛡️ INTELLIGENT ID GENERATION: If blank, create BJG-XXXX
-          let finalRegNo = (row.registration_no || row.registration_ || row['Reg No'] || '').trim();
-          if (!finalRegNo) {
-            finalRegNo = `BJG-${idSequence + index}`;
+        const cleanedData = results.data.map((row) => {
+          if (!row.registration_no || row.registration_no.trim() === '') {
+            lastNum++
+            row.registration_no = `BJG-${lastNum}`
           }
-
           return {
-            full_name: name.trim(),
-            phone: phone.toString().trim().replace(/\D/g, '').slice(-10),
-            registration_no: finalRegNo,
-            plan_type: row.plan_type || row.Plan || 'Monthly',
-            fees_paid: Number(row.fees_paid || row.Fees || 0),
-            payment_mode: row.payment_mode || row.Mode || 'Cash',
-            joining_date: row.joining_date || row.JoiningDate || new Date().toISOString().split('T')[0],
-            expiry_date: row.expiry_date || row.ExpiryDate || null,
-            qr_code_data: finalRegNo,
-            status: 'active'
+            full_name: row.full_name,
+            phone: row.phone,
+            plan_type: row.plan_type || 'Monthly',
+            fees_paid: parseInt(row.fees_paid) || 0,
+            payment_mode: row.payment_mode || 'Cash',
+            joining_date: row.joining_date || new Date().toISOString().split('T')[0],
+            expiry_date: row.expiry_date || new Date().toISOString().split('T')[0],
+            registration_no: row.registration_no,
+            qr_code_data: `BAJRANG-${row.registration_no}-${Date.now()}`
           }
-        }).filter(item => item.full_name && item.phone)
-
-        setData(validatedData)
+        })
+        setData(cleanedData)
+      },
+      error: (error) => {
+        setImportError("CSV Parsing Error: " + error.message)
       }
     })
   }
 
   const uploadMutation = useMutation({
-    mutationFn: async (athletes) => {
-      setImportError(null)
+    mutationFn: async (membersToUpload) => {
       const { data: result, error } = await supabase
         .from('members')
-        .insert(athletes)
+        .insert(membersToUpload)
         .select()
 
       if (error) throw error
       return result
     },
-    onSuccess: (result) => {
-      setSuccess(result.length)
-      logAction('Bulk Upload Successful', `Enrolled ${result.length} athletes`)
+    onSuccess: (data) => {
+      setSuccess(data.length)
       queryClient.invalidateQueries(['members'])
-      queryClient.invalidateQueries(['dashboard-stats'])
-      setTimeout(() => navigate('/members'), 2500)
+      logAction('bulk_import', { count: data.length })
     },
-    onError: (err) => {
-      console.error('Import Fail:', err)
-      setImportError(err.message || 'Database rejected the import. Please check for duplicate phones.')
+    onError: (error) => {
+      setImportError(error.message)
     }
   })
 
   return (
-    <div className="max-w-4xl mx-auto pb-24 animate-page">
+    <div className="max-w-4xl mx-auto pb-24">
       <div className="flex items-center justify-between mb-8">
-        <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-2xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
+        <button onClick={() => navigate('/members')} className="p-3 bg-zinc-900 border border-white/5 rounded-2xl text-zinc-400 hover:text-white transition-all">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-[var(--text-main)]">Bulk <span className="text-brand-red">Migration</span></h1>
-        <button onClick={downloadTemplate} className="flex items-center gap-2 text-[10px] font-black uppercase text-brand-red hover:underline tracking-widest">
-          <Download size={14} /> Sample Template
-        </button>
+        <div className="text-right">
+          <h2 className="text-2xl font-black italic uppercase text-white tracking-tighter">Bulk Migration</h2>
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Database Ingestion Engine</p>
+        </div>
       </div>
 
       {!data.length ? (
-        <label className="group relative block cursor-pointer">
-          <div className="absolute -inset-1 bg-gradient-to-r from-brand-red to-orange-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-          <div className="relative card p-16 md:p-24 flex flex-col items-center justify-center border-2 border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)] rounded-[2.5rem] hover:border-brand-red/40 transition-all">
-            <div className="w-20 h-20 bg-brand-red/10 rounded-full flex items-center justify-center mb-6 text-brand-red group-hover:scale-110 transition-transform">
-              <Upload size={40} />
-            </div>
-            <h3 className="text-xl font-black italic uppercase text-[var(--text-main)] mb-2">Drop Athlete Sheet</h3>
-            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em]">CSV files only | Headers: Name, Phone, Plan, Fees</p>
-            <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
+        <div className="card p-12 flex flex-col items-center border-dashed border-2 border-white/5 bg-zinc-950/50">
+          <div className="w-20 h-20 bg-brand-red/10 text-brand-red rounded-3xl flex items-center justify-center mb-6">
+            <Upload size={32} />
           </div>
-        </label>
+          <h3 className="text-xl font-black italic uppercase text-white mb-2 tracking-tight">Drop your CSV Sheet</h3>
+          <p className="text-xs text-zinc-500 mb-8 text-center max-w-sm">Upload your Excel or CSV file to enroll multiple athletes instantly. Ensure columns match our template.</p>
+
+          <div className="flex gap-4">
+            <label className="btn-primary px-8 py-4 flex items-center gap-3 cursor-pointer">
+              <FileSpreadsheet size={18} /> Select File
+              <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+            </label>
+            <button onClick={downloadTemplate} className="px-8 py-4 bg-zinc-900 border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all flex items-center gap-2">
+              <Download size={14} /> Template
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="space-y-6">
-          {importError && (
-            <div className="bg-rose-500/10 border border-rose-500/20 p-6 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-500">
-              <XCircle className="text-rose-500 flex-shrink-0" size={32} />
-              <div>
-                <h4 className="text-rose-500 font-black uppercase italic tracking-widest">Import Shield Triggered</h4>
-                <p className="text-[10px] font-bold text-rose-500/70 uppercase mt-1">{importError}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="card p-8 bg-gradient-to-br from-brand-red/5 to-transparent shadow-[var(--shadow-main)]">
-            <div className="flex items-center justify-between mb-8">
+          <div className="card p-8 bg-zinc-950 border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between mb-8 relative z-10">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center">
                   <FileSpreadsheet size={24} />
                 </div>
                 <div>
-                  <h4 className="font-black italic uppercase text-[var(--text-main)] tracking-tight">Sheet Parsed Ready</h4>
+                  <h4 className="font-black italic uppercase text-white tracking-tight">Sheet Parsed Ready</h4>
                   <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none mt-1">{data.length} New Athletes Detected</p>
                 </div>
               </div>
 
               {!uploadMutation.isPending && !success && (
                 <button
-                  onClick={() => uploadMutation.mutate(data)}
-                  className="btn-primary flex items-center gap-3 px-10"
+                  onClick={() => setIsPinOpen(true)}
+                  className="btn-primary flex items-center gap-3 px-10 shadow-lg shadow-brand-red/20"
                 >
                   <ShieldCheck size={20} /> Confirm Import
                 </button>
               )}
             </div>
+
+            {importError && (
+              <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3 text-rose-500">
+                <AlertCircle size={20} />
+                <p className="text-xs font-bold uppercase tracking-wide">{importError}</p>
+              </div>
+            )}
 
             {uploadMutation.isPending && (
               <div className="py-12 flex flex-col items-center gap-4 animate-pulse">
@@ -168,25 +174,25 @@ export default function BulkImport() {
               <div className="py-12 flex flex-col items-center gap-4 animate-bounce">
                 <CheckCircle2 className="text-emerald-500" size={64} />
                 <h3 className="text-2xl font-black italic uppercase text-emerald-500">Import Successful!</h3>
-                <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-widest text-center">{success} New Legends Enrolled in Bajrang Gym 2.0</p>
+                <p className="text-[10px] font-bold uppercase text-zinc-500 tracking-widest text-center">{success} New Legends Enrolled in Bajrang Gym 2.0</p>
               </div>
             )}
 
             {!uploadMutation.isPending && !success && (
-              <div className="max-h-[400px] overflow-y-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-input)] shadow-inner">
+              <div className="max-h-[400px] overflow-y-auto rounded-2xl border border-white/5 bg-zinc-900/40 shadow-inner">
                 <table className="w-full text-left border-collapse">
-                  <thead className="sticky top-0 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] z-10">
+                  <thead className="sticky top-0 bg-zinc-950 border-b border-white/5 z-10">
                     <tr>
-                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Athlete</th>
-                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Phone</th>
-                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Generated Registration</th>
+                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-zinc-500">Athlete</th>
+                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-zinc-500">Phone</th>
+                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-zinc-500">Registration</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                  <tbody className="divide-y divide-white/5">
                     {data.slice(0, 50).map((row, i) => (
                       <tr key={i} className="hover:bg-brand-red/5 transition-colors">
-                        <td className="p-4 text-xs font-black italic uppercase text-[var(--text-main)]">{row.full_name}</td>
-                        <td className="p-4 text-xs font-bold text-[var(--text-muted)]">{row.phone}</td>
+                        <td className="p-4 text-xs font-black italic uppercase text-white">{row.full_name}</td>
+                        <td className="p-4 text-xs font-bold text-zinc-500">{row.phone}</td>
                         <td className="p-4 text-[10px] font-black text-brand-red uppercase">{row.registration_no}</td>
                       </tr>
                     ))}
@@ -206,6 +212,13 @@ export default function BulkImport() {
           )}
         </div>
       )}
+
+      <SecurityDialog
+        isOpen={isPinOpen}
+        onClose={() => setIsPinOpen(false)}
+        onVerified={() => uploadMutation.mutate(data)}
+        title="Authorize Import?"
+      />
     </div>
   )
 }
