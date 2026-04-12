@@ -1,0 +1,8 @@
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { Trash2, Edit3, ArrowLeft, Phone, Calendar, Clock, Download, CheckCircle, AlertCircle, Loader2, ShieldCheck, Zap, Award } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { QRCodeSVG } from 'qrcode.react'
+import { format, isPast, differenceInDays, parseISO } from 'date-fns'
+import * as screenshot from 'modern-screenshot'
+import { getStatus } from '../lib/status'

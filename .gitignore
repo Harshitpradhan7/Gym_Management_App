@@ -1,0 +1,24 @@
+# 🛡️ Node & Build
+node_modules
+dist
+dist-ssr
+*.local
+
+# 🔑 Secrets (CRITICAL: Do NOT upload these to GitHub!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 🧪 Testing & Debug
+coverage
+*.log
+.DS_Store
+.vsc-test-results
+.vscode
+
+# 🏗️ Build tools
+.vite
+.next
+.production
