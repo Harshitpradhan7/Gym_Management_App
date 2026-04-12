@@ -25,7 +25,7 @@ export default function EditMember() {
         .select('*')
         .eq('id', id)
         .single()
-      
+
       if (error) {
         console.error(error)
         navigate('/members')
@@ -110,7 +110,7 @@ export default function EditMember() {
         <div className="card p-8 space-y-6">
           <div className="space-y-2">
             <label className="text-xs uppercase font-black text-zinc-500 tracking-widest">Full Name</label>
-            <input 
+            <input
               required
               name="full_name"
               value={formData.full_name}
@@ -121,7 +121,7 @@ export default function EditMember() {
 
           <div className="space-y-2">
             <label className="text-xs uppercase font-black text-zinc-500 tracking-widest">Phone Number</label>
-            <input 
+            <input
               required
               name="phone"
               value={formData.phone}
@@ -132,7 +132,7 @@ export default function EditMember() {
 
           <div className="space-y-2">
             <label className="text-xs uppercase font-black text-zinc-500 tracking-widest">Photo URL</label>
-            <input 
+            <input
               name="photo_url"
               value={formData.photo_url || ''}
               onChange={handleInputChange}
@@ -143,18 +143,18 @@ export default function EditMember() {
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs uppercase font-black text-brand-red tracking-widest flex items-center gap-2">💰 Fees Paid (₹)</label>
-              <input 
+              <input
                 required
                 name="fees_paid"
                 value={formData.fees_paid || ''}
                 onChange={handleInputChange}
-                type="number" 
+                type="number"
                 className="w-full bg-black border border-zinc-800 rounded-xl py-3 px-4 focus:ring-2 focus:ring-brand-red outline-none font-bold"
               />
             </div>
             <div className="space-y-2">
               <label className="text-xs uppercase font-black text-brand-red tracking-widest flex items-center gap-2">💳 Mode</label>
-              <select 
+              <select
                 name="payment_mode"
                 value={formData.payment_mode || 'Cash'}
                 onChange={handleInputChange}
@@ -171,7 +171,7 @@ export default function EditMember() {
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs uppercase font-black text-zinc-500 tracking-widest">Plan</label>
-              <select 
+              <select
                 name="plan_type"
                 value={formData.plan_type}
                 onChange={handleInputChange}
@@ -184,7 +184,7 @@ export default function EditMember() {
             </div>
             <div className="space-y-2">
               <label className="text-xs uppercase font-black text-zinc-500 tracking-widest">Joined On</label>
-              <input 
+              <input
                 type="date"
                 name="joining_date"
                 value={formData.joining_date}
@@ -195,12 +195,12 @@ export default function EditMember() {
           </div>
 
           <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
-             <p className="text-[10px] uppercase font-black text-zinc-500 mb-1">Membership Expiry</p>
-             <p className="text-xl font-black text-brand-red italic">{formData.expiry_date ? format(parseISO(formData.expiry_date), 'dd MMMM yyyy') : '--'}</p>
+            <p className="text-[10px] uppercase font-black text-zinc-500 mb-1">Membership Expiry</p>
+            <p className="text-xl font-black text-brand-red italic">{formData.expiry_date ? format(parseISO(formData.expiry_date), 'dd MMMM yyyy') : '--'}</p>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={saving}
             className={`btn-primary w-full py-4 text-sm font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 ${saving ? 'opacity-50' : ''}`}
           >

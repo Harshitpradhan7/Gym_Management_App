@@ -1,183 +1,211 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, ArrowLeft, Loader2, CheckCircle, AlertCircle, FileText, Download } from 'lucide-react'
-import { supabase } from '../lib/supabase'
-import { format, addMonths } from 'date-fns'
+import {
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  Download,
+  ShieldCheck,
+  XCircle
+} from 'lucide-react'
 import Papa from 'papaparse'
+import { supabase } from '../lib/supabase'
+import { logAction } from '../lib/audit'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 export default function BulkImport() {
   const navigate = useNavigate()
-  const [uploading, setUploading] = useState(false)
-  const [results, setResults] = useState(null)
-  const [error, setError] = useState(null)
+  const queryClient = useQueryClient()
+  const [data, setData] = useState([])
+  const [success, setSuccess] = useState(0)
+  const [importError, setImportError] = useState(null)
 
-  const planDurations = {
-    'Monthly': 1,
-    'Quarterly': 3,
-    'Half Yearly': 6,
-    'Annual': 12
+  const downloadTemplate = () => {
+    const headers = 'full_name,phone,plan_type,fees_paid,payment_mode,joining_date,expiry_date,registration_no\n'
+    const sample = 'John Doe,9876543210,Monthly,1500,Cash,2026-04-01,2026-05-01,BJG-1001\n'
+    const blob = new Blob([headers + sample], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'BajrangGym_Bulk_Template.csv'
+    a.click()
   }
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
-
-    setUploading(true)
-    setError(null)
-    setResults(null)
+    setImportError(null)
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const { data: existingMembers } = await supabase.from('members').select('phone, full_name')
-          const existingPhones = new Set(existingMembers.map(m => m.phone))
-          const existingNames = new Set(existingMembers.map(m => m.full_name.toLowerCase()))
+      complete: (results) => {
+        // 🔥 Start sequence from a timestamp-based base to ensure uniqueness
+        let idSequence = Math.floor(Date.now() / 100000) % 10000;
 
-          const toInsert = []
-          let skipped = 0
+        const validatedData = results.data.map((row, index) => {
+          const name = row.full_name || row.Name || row['Full Name'] || ''
+          const phone = row.phone || row.Phone || row['Phone Number'] || ''
 
-          for (const row of results.data) {
-            const name = row.Name || row.full_name || row['Full Name']
-            const phone = row.Phone || row.phone || row['Phone Number']
-            const joinDate = row.JoiningDate || row.joining_date || row['Joining Date']
-            const plan = row.Plan || row.plan_type || row['Plan Type'] || 'Monthly'
-            const fees = row.Fees || row.fees_paid || row['Fees Paid'] || 0
-            const mode = row.Mode || row.payment_mode || row['Payment Mode'] || 'Cash'
-
-            if (!name || !phone) {
-              skipped++
-              continue
-            }
-
-            // Clean phone number (keep only 10 digits)
-            const cleanPhone = phone.toString().replace(/\D/g, '').slice(-10)
-
-            // Check if exists
-            if (existingPhones.has(cleanPhone) || existingNames.has(name.toLowerCase())) {
-              skipped++
-              continue
-            }
-
-            // Calculate expiry
-            const joining = joinDate ? new Date(joinDate) : new Date()
-            const months = planDurations[plan] || 1
-            const expiry = addMonths(joining, months)
-
-            toInsert.push({
-              full_name: name,
-              phone: cleanPhone,
-              plan_type: plan,
-              joining_date: format(joining, 'yyyy-MM-dd'),
-              expiry_date: format(expiry, 'yyyy-MM-dd'),
-              fees_paid: Number(fees),
-              payment_mode: mode,
-              status: 'active',
-              qr_code_data: `BG-${Date.now()}-${cleanPhone}-${Math.random().toString(36).substring(7)}`,
-              registration_no: `BJG-HIST-${Math.floor(1000 + Math.random() * 9000)}`
-            })
+          // 🛡️ INTELLIGENT ID GENERATION: If blank, create BJG-XXXX
+          let finalRegNo = (row.registration_no || row.registration_ || row['Reg No'] || '').trim();
+          if (!finalRegNo) {
+            finalRegNo = `BJG-${idSequence + index}`;
           }
 
-          if (toInsert.length > 0) {
-            const { error: insertError } = await supabase.from('members').insert(toInsert)
-            if (insertError) throw insertError
+          return {
+            full_name: name.trim(),
+            phone: phone.toString().trim().replace(/\D/g, '').slice(-10),
+            registration_no: finalRegNo,
+            plan_type: row.plan_type || row.Plan || 'Monthly',
+            fees_paid: Number(row.fees_paid || row.Fees || 0),
+            payment_mode: row.payment_mode || row.Mode || 'Cash',
+            joining_date: row.joining_date || row.JoiningDate || new Date().toISOString().split('T')[0],
+            expiry_date: row.expiry_date || row.ExpiryDate || null,
+            qr_code_data: finalRegNo,
+            status: 'active'
           }
+        }).filter(item => item.full_name && item.phone)
 
-          setResults({
-            added: toInsert.length,
-            skipped: skipped
-          })
-        } catch (err) {
-          console.error('Bulk upload error:', err)
-          setError(err.message || 'Error processing CSV file.')
-        } finally {
-          setUploading(false)
-        }
-      },
-      error: (err) => {
-        setError('Error reading CSV file.')
-        setUploading(false)
+        setData(validatedData)
       }
     })
   }
 
-  const downloadSample = () => {
-    const csvContent = "Name,Phone,JoiningDate,Plan,Fees,Mode\nRohit Kumar,9876543210,2024-01-10,Monthly,1000,Cash\nSonia Sharma,9988776655,2024-02-15,Quarterly,3000,UPI"
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.setAttribute('hidden', '')
-    a.setAttribute('href', url)
-    a.setAttribute('download', 'bajrang_gym_sample.csv')
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-  }
+  const uploadMutation = useMutation({
+    mutationFn: async (athletes) => {
+      setImportError(null)
+      const { data: result, error } = await supabase
+        .from('members')
+        .insert(athletes)
+        .select()
+
+      if (error) throw error
+      return result
+    },
+    onSuccess: (result) => {
+      setSuccess(result.length)
+      logAction('Bulk Upload Successful', `Enrolled ${result.length} athletes`)
+      queryClient.invalidateQueries(['members'])
+      queryClient.invalidateQueries(['dashboard-stats'])
+      setTimeout(() => navigate('/members'), 2500)
+    },
+    onError: (err) => {
+      console.error('Import Fail:', err)
+      setImportError(err.message || 'Database rejected the import. Please check for duplicate phones.')
+    }
+  })
 
   return (
-    <div className="max-w-2xl mx-auto py-10">
-      <div className="mb-8 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="p-2 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-400">
+    <div className="max-w-4xl mx-auto pb-24 animate-page">
+      <div className="flex items-center justify-between mb-8">
+        <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-2xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
           <ArrowLeft size={20} />
         </button>
-        <h2 className="text-3xl font-black uppercase italic">Bulk <span className="text-brand-red">Migration</span></h2>
+        <h1 className="text-2xl font-black italic uppercase tracking-tighter text-[var(--text-main)]">Bulk <span className="text-brand-red">Migration</span></h1>
+        <button onClick={downloadTemplate} className="flex items-center gap-2 text-[10px] font-black uppercase text-brand-red hover:underline tracking-widest">
+          <Download size={14} /> Sample Template
+        </button>
       </div>
 
-      <div className="card p-10 flex flex-col items-center text-center">
-        <div className="w-20 h-20 bg-brand-red/10 rounded-full flex items-center justify-center mb-6 border border-brand-red/20 shadow-[0_0_50px_rgba(255,62,62,0.1)]">
-          <FileText size={40} className="text-brand-red" />
-        </div>
-
-        <h3 className="text-xl font-black mb-2 uppercase italic">Upload Historical Data</h3>
-        <p className="text-zinc-500 mb-8 max-w-sm text-sm">Transfer your old Excel or Google Sheet records directly into your gym database. We will check for duplicates automatically.</p>
-
-        {results ? (
-          <div className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 mb-8">
-            <CheckCircle className="text-emerald-500 mx-auto mb-4" size={32} />
-            <h4 className="text-emerald-400 font-black uppercase italic text-lg mb-1">Import Complete!</h4>
-            <p className="text-zinc-400 text-sm">Successfully added **{results.added}** new members. Skipped {results.skipped} duplicates.</p>
-            <button onClick={() => navigate('/members')} className="mt-6 btn-primary px-8 py-2 text-xs font-black uppercase tracking-widest">Go to Members List</button>
+      {!data.length ? (
+        <label className="group relative block cursor-pointer">
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-red to-orange-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+          <div className="relative card p-16 md:p-24 flex flex-col items-center justify-center border-2 border-dashed border-[var(--border-subtle)] bg-[var(--bg-card)] rounded-[2.5rem] hover:border-brand-red/40 transition-all">
+            <div className="w-20 h-20 bg-brand-red/10 rounded-full flex items-center justify-center mb-6 text-brand-red group-hover:scale-110 transition-transform">
+              <Upload size={40} />
+            </div>
+            <h3 className="text-xl font-black italic uppercase text-[var(--text-main)] mb-2">Drop Athlete Sheet</h3>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em]">CSV files only | Headers: Name, Phone, Plan, Fees</p>
+            <input type="file" className="hidden" accept=".csv" onChange={handleFileUpload} />
           </div>
-        ) : error ? (
-          <div className="w-full bg-red-500/10 border border-red-500/20 rounded-2xl p-6 mb-8 text-center text-red-400">
-            <AlertCircle className="mx-auto mb-2" />
-            <p className="text-sm font-bold uppercase">{error}</p>
+        </label>
+      ) : (
+        <div className="space-y-6">
+          {importError && (
+            <div className="bg-rose-500/10 border border-rose-500/20 p-6 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4 duration-500">
+              <XCircle className="text-rose-500 flex-shrink-0" size={32} />
+              <div>
+                <h4 className="text-rose-500 font-black uppercase italic tracking-widest">Import Shield Triggered</h4>
+                <p className="text-[10px] font-bold text-rose-500/70 uppercase mt-1">{importError}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="card p-8 bg-gradient-to-br from-brand-red/5 to-transparent shadow-[var(--shadow-main)]">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center">
+                  <FileSpreadsheet size={24} />
+                </div>
+                <div>
+                  <h4 className="font-black italic uppercase text-[var(--text-main)] tracking-tight">Sheet Parsed Ready</h4>
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest leading-none mt-1">{data.length} New Athletes Detected</p>
+                </div>
+              </div>
+
+              {!uploadMutation.isPending && !success && (
+                <button
+                  onClick={() => uploadMutation.mutate(data)}
+                  className="btn-primary flex items-center gap-3 px-10"
+                >
+                  <ShieldCheck size={20} /> Confirm Import
+                </button>
+              )}
+            </div>
+
+            {uploadMutation.isPending && (
+              <div className="py-12 flex flex-col items-center gap-4 animate-pulse">
+                <Loader2 className="animate-spin text-brand-red" size={48} />
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-red">Synchronizing Database...</p>
+              </div>
+            )}
+
+            {success > 0 && (
+              <div className="py-12 flex flex-col items-center gap-4 animate-bounce">
+                <CheckCircle2 className="text-emerald-500" size={64} />
+                <h3 className="text-2xl font-black italic uppercase text-emerald-500">Import Successful!</h3>
+                <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-widest text-center">{success} New Legends Enrolled in Bajrang Gym 2.0</p>
+              </div>
+            )}
+
+            {!uploadMutation.isPending && !success && (
+              <div className="max-h-[400px] overflow-y-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-input)] shadow-inner">
+                <table className="w-full text-left border-collapse">
+                  <thead className="sticky top-0 bg-[var(--bg-card)] border-b border-[var(--border-subtle)] z-10">
+                    <tr>
+                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Athlete</th>
+                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Phone</th>
+                      <th className="p-4 text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Generated Registration</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
+                    {data.slice(0, 50).map((row, i) => (
+                      <tr key={i} className="hover:bg-brand-red/5 transition-colors">
+                        <td className="p-4 text-xs font-black italic uppercase text-[var(--text-main)]">{row.full_name}</td>
+                        <td className="p-4 text-xs font-bold text-[var(--text-muted)]">{row.phone}</td>
+                        <td className="p-4 text-[10px] font-black text-brand-red uppercase">{row.registration_no}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="w-full space-y-6">
-            <input
-              type="file"
-              accept=".csv"
-              id="csv-upload"
-              className="hidden"
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-            <label
-              htmlFor="csv-upload"
-              className={`w-full btn-primary py-5 rounded-2xl flex items-center justify-center gap-3 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+
+          {!uploadMutation.isPending && !success && (
+            <button
+              onClick={() => setData([])}
+              className="w-full py-4 border border-rose-500/20 text-rose-500 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-500/10 transition-all font-bold"
             >
-              {uploading ? <Loader2 className="animate-spin" size={24} /> : <Upload size={24} />}
-              <span className="font-black uppercase tracking-[0.2em]">{uploading ? 'Processing Data...' : 'Select CSV File'}</span>
-            </label>
-
-            <button onClick={downloadSample} className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors mx-auto text-xs uppercase font-black tracking-widest">
-              <Download size={14} /> Download Sample Template
+              Discard and Try New Sheet
             </button>
-          </div>
-        )}
-
-        <div className="mt-10 p-6 bg-zinc-900 border border-zinc-800 rounded-2xl w-full text-left">
-          <h4 className="text-[10px] uppercase font-black text-zinc-500 tracking-widest mb-3 italic">Instructions:</h4>
-          <ul className="space-y-2 text-[10px] text-zinc-400 uppercase font-black leading-relaxed tracking-wider">
-            <li className="flex gap-2"><span>1.</span> Export your Google Sheet as a .CSV file.</li>
-            <li className="flex gap-2"><span>2.</span> Ensure columns are named: Name, Phone, JoiningDate, Plan.</li>
-            <li className="flex gap-2"><span>3.</span> Date format should be YYYY-MM-DD (e.g. 2024-03-24).</li>
-            <li className="flex gap-2 text-brand-red"><span>4.</span> No double entries: We skip any phone number or name already in use.</li>
-          </ul>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }

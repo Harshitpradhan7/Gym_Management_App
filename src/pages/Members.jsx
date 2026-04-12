@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, UserPlus, Phone, Calendar, ArrowUpRight, Filter, Grid, List as ListIcon, ShieldCheck, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, UserPlus, Phone, Calendar, ArrowUpRight, Filter, Grid, List as ListIcon, ShieldCheck, Clock, AlertCircle, ChevronLeft, ChevronRight, Upload, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
@@ -74,9 +74,17 @@ export default function Members() {
               <ListIcon size={20} />
             </button>
           </div>
-          <Link to="/members/add" className="btn-primary flex items-center gap-2 py-3.5 px-6 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-brand-red/20 group">
-            <UserPlus size={18} className="group-hover:rotate-12 transition-transform" /> Add Athlete
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/members/bulk-import"
+              className="flex items-center gap-2 px-6 py-3.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-brand-red hover:border-brand-red/30 transition-all"
+            >
+              <Upload size={16} /> Bulk Upload
+            </Link>
+            <Link to="/members/add" className="btn-primary flex items-center gap-2 px-8 py-3.5">
+              <Plus size={20} className="hover:rotate-90 transition-transform" /> Add Athlete
+            </Link>
+          </div>
         </div>
       </div>
 

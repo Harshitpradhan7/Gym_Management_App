@@ -13,9 +13,9 @@ import {
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { format, parseISO, isAfter, subMonths, startOfMonth, endOfMonth, endOfDay, startOfYear, startOfToday, subDays, isSameDay, startOfWeek, isWithinInterval } from 'date-fns'
+import { format, parseISO, isAfter, subMonths, startOfMonth, endOfMonth, endOfDay, startOfYear, isSameDay, subDays, isWithinInterval, eachMonthOfInterval } from 'date-fns'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState('all')
@@ -67,22 +67,28 @@ export default function Dashboard() {
   const displayRevenue = filteredMembers.reduce((sum, m) => sum + (Number(m.fees_paid) || 0), 0)
   const totalRevenue = members.reduce((sum, m) => sum + (Number(m.fees_paid) || 0), 0)
 
-  // Calculate Last Month's Growth
-  const lastMonthStart = startOfMonth(subMonths(new Date(), 1))
-  const newThisMonth = members.filter(m => parseISO(m.joining_date || m.created_at) >= startOfMonth(new Date())).length
-  const newLastMonth = members.filter(m => {
-    const d = parseISO(m.joining_date || m.created_at)
-    return d >= lastMonthStart && d <= endOfMonth(subMonths(new Date(), 1))
-  }).length
+  // 📊 DYNAMIC GROWTH CHART CALCULATION
+  const chartData = useMemo(() => {
+    const lastM = eachMonthOfInterval({
+      start: subMonths(new Date(), 3),
+      end: new Date()
+    })
 
-  const growth = newLastMonth === 0 ? 100 : Math.round(((newThisMonth - newLastMonth) / newLastMonth) * 100)
+    return lastM.map(monthStart => {
+      const monthEnd = endOfMonth(monthStart)
+      const monthLabel = format(monthStart, 'MMM')
 
-  const chartData = [
-    { name: format(subMonths(new Date(), 3), 'MMM'), value: 400 },
-    { name: format(subMonths(new Date(), 2), 'MMM'), value: 300 },
-    { name: format(subMonths(new Date(), 1), 'MMM'), value: 500 },
-    { name: format(new Date(), 'MMM'), value: displayRevenue / 10 },
-  ]
+      const monthRevenue = members.reduce((sum, m) => {
+        const joinDate = parseISO(m.joining_date || m.created_at)
+        if (joinDate >= monthStart && joinDate <= monthEnd) {
+          return sum + (Number(m.fees_paid) || 0)
+        }
+        return sum
+      }, 0)
+
+      return { name: monthLabel, value: monthRevenue }
+    })
+  }, [members])
 
   const stats = [
     { label: 'Total Members', value: totalMembers, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10', delta: 'Total list' },
@@ -178,9 +184,10 @@ export default function Dashboard() {
       {/* 🔴 DATA VISUALS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-2 card p-6 md:p-8">
-          <div className="mb-8">
+          <div className="mb-8 overflow-hidden relative">
             <h3 className="text-xl font-black uppercase italic tracking-widest text-white">Business Chart</h3>
-            <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">How your gym is growing monthly</p>
+            <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Growth Analytics based on real joined athletes</p>
+            <Activity className="absolute right-0 top-0 text-brand-red/10" size={64} />
           </div>
           <div className="h-[250px] md:h-[300px] w-full">
             {!membersLoading && chartData.length > 0 ? (
@@ -197,6 +204,7 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '12px' }}
                     itemStyle={{ color: '#ff3e3e', fontWeight: 'bold' }}
+                    formatter={(val) => [`₹${val.toLocaleString()}`, 'Revenue']}
                   />
                   <Area type="monotone" dataKey="value" stroke="#ff3e3e" strokeWidth={4} fill="url(#colorValue)" />
                 </AreaChart>
