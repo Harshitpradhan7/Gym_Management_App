@@ -48,43 +48,49 @@ export default function Members() {
   return (
     <div className="space-y-8 animate-page pb-20">
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-2xl md:text-5xl font-black italic uppercase tracking-tighter leading-none mb-3 whitespace-nowrap">
-            Athlete <span className="text-brand-red">Directory</span>
-          </h1>
-          <p className="text-[var(--theme-text-muted)] font-bold uppercase text-xs tracking-[0.3em] flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-brand-red animate-pulse"></span>
-            Total Roster: {totalCount} Athletes
-          </p>
-        </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-[1.6rem] sm:text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none mb-1.5 md:whitespace-nowrap">
+              Athlete <span className="text-brand-red">Directory</span>
+            </h1>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-red animate-pulse"></span>
+              <p className="text-[var(--theme-text-muted)] font-black uppercase text-[8px] md:text-[10px] tracking-[0.2em]">
+                {totalCount} Total Athletes
+              </p>
+            </div>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex bg-[var(--theme-surface-soft)]/50 p-1 rounded-2xl border border-[var(--theme-border)]">
+          <div className="flex bg-[var(--theme-surface-soft)] p-0.5 rounded-xl border border-[var(--theme-border)] shrink-0 self-start">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-[var(--theme-surface)] text-[var(--theme-text)] shadow-xl' : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'}`}
+              className={`p-2 rounded-[10px] transition-all flex items-center justify-center ${viewMode === 'grid' ? 'bg-[var(--theme-surface)] text-[var(--theme-text)] shadow-sm' : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'}`}
             >
-              <Grid size={20} />
+              <Grid size={16} />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-[var(--theme-surface)] text-[var(--theme-text)] shadow-xl' : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'}`}
+              className={`p-2 rounded-[10px] transition-all flex items-center justify-center ${viewMode === 'list' ? 'bg-[var(--theme-surface)] text-[var(--theme-text)] shadow-sm' : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'}`}
             >
-              <ListIcon size={20} />
+              <ListIcon size={16} />
             </button>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              to="/members/bulk-import"
-              className="flex items-center gap-2 px-6 py-3.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-brand-red hover:border-brand-red/30 transition-all"
-            >
-              <Upload size={16} /> Bulk Upload
-            </Link>
-            <Link to="/members/add" className="btn-primary flex items-center gap-2 px-8 py-3.5">
-              <Plus size={20} className="hover:rotate-90 transition-transform" /> Add Athlete
-            </Link>
-          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:flex items-center gap-3">
+          <Link
+            to="/members/bulk-import"
+            className="flex-1 flex items-center justify-center gap-2.5 px-4 py-4 bg-[var(--theme-surface-soft)] border border-[var(--theme-border)] rounded-2xl text-[10px] font-black uppercase tracking-widest text-[var(--theme-text-muted)] hover:text-brand-red hover:border-brand-red/30 transition-all shadow-inner"
+          >
+            <Upload size={18} /> Bulk Upload
+          </Link>
+          <Link 
+            to="/members/add" 
+            className="flex-1 flex items-center justify-center gap-2.5 px-4 py-4 bg-brand-red text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-brand-red/20 italic"
+          >
+            <Plus size={20} className="hover:rotate-90 transition-transform" /> Add Athlete
+          </Link>
         </div>
       </div>
 
