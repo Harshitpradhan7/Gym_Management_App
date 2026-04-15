@@ -8,26 +8,7 @@
 }
 
 :root {
-  /* Default: Dark Theme (as originally designed) */
-  --theme-bg: #000000;
-  --theme-surface: #09090b; /* zinc-950 */
-  --theme-surface-soft: #18181b; /* zinc-900 */
-  --theme-text: #f4f4f5; /* zinc-100 */
-  --theme-text-muted: #71717a; /* zinc-500 */
-  --theme-border: rgba(255, 255, 255, 0.08);
-  --theme-card-shadow: rgba(0, 0, 0, 0.8);
-  
-  --glass-bg: rgba(15, 15, 20, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-highlight: rgba(255, 62, 62, 0.1);
-  
-  --gradient-1: rgba(255, 62, 62, 0.08);
-  --gradient-2: rgba(255, 62, 62, 0.04);
-  --gradient-3: rgba(30, 30, 50, 0.3);
-}
-
-:root.light {
-  /* Light Theme Overrides */
+  /* Default Theme: LIGHT */
   --theme-bg: #f8fafc; /* slate-50 */
   --theme-surface: #ffffff;
   --theme-surface-soft: #f1f5f9; /* slate-100 */
@@ -38,10 +19,29 @@
 
   --glass-bg: rgba(255, 255, 255, 0.8);
   --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-highlight: rgba(255, 62, 62, 0.1);
   
   --gradient-1: rgba(255, 62, 62, 0.05);
   --gradient-2: rgba(255, 62, 62, 0.02);
   --gradient-3: rgba(200, 200, 220, 0.1);
+}
+
+:root.dark {
+  /* Override Theme: DARK */
+  --theme-bg: #000000;
+  --theme-surface: #09090b; /* zinc-950 */
+  --theme-surface-soft: #18181b; /* zinc-900 */
+  --theme-text: #f4f4f5; /* zinc-100 */
+  --theme-text-muted: #71717a; /* zinc-500 */
+  --theme-border: rgba(255, 255, 255, 0.08);
+  --theme-card-shadow: rgba(0, 0, 0, 0.8);
+  
+  --glass-bg: rgba(15, 15, 20, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  --gradient-1: rgba(255, 62, 62, 0.08);
+  --gradient-2: rgba(255, 62, 62, 0.04);
+  --gradient-3: rgba(30, 30, 50, 0.3);
 }
 
 body {
