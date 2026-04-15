@@ -100,7 +100,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-page">
       {/* 🔴 BIG ACTION SECTION */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-zinc-900/20 p-6 md:p-8 rounded-[32px] border border-white/5 shadow-2xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-[var(--theme-surface-soft)]/20 p-6 md:p-8 rounded-[32px] border border-[var(--theme-border)] shadow-2xl">
         <div>
           <h1 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none mb-3">
             Bajrang <span className="text-brand-red">Gym 2.0</span>
@@ -118,7 +118,7 @@ export default function Dashboard() {
               <button
                 key={f.id}
                 onClick={() => setTimeFilter(f.id)}
-                className={`px-3 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-widest transition-all ${timeFilter === f.id ? 'bg-brand-red border-brand-red text-white' : 'bg-white/5 border-white/5 text-zinc-500 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-widest transition-all ${timeFilter === f.id ? 'bg-brand-red border-brand-red text-white' : 'bg-[var(--theme-surface-soft)]/50 border-[var(--theme-border)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'}`}
               >
                 {f.label}
               </button>
@@ -134,7 +134,7 @@ export default function Dashboard() {
                 <input
                   type="date"
                   style={{ colorScheme: 'dark', accentColor: '#ff3e3e' }}
-                  className="bg-zinc-950/80 border border-white/10 rounded-xl !pl-10 pr-4 py-2 text-[10px] font-black text-white outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red transition-all cursor-pointer box-border h-10 shadow-inner"
+                  className="bg-[var(--theme-surface)]/80 border border-[var(--theme-border)] rounded-xl !pl-10 pr-4 py-2 text-[10px] font-black text-[var(--theme-text)] outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red transition-all cursor-pointer box-border h-10 shadow-inner"
                   value={customRange.start}
                   onClick={(e) => e.target.showPicker?.()}
                   onChange={(e) => setCustomRange({ ...customRange, start: e.target.value })}
@@ -150,7 +150,7 @@ export default function Dashboard() {
                 <input
                   type="date"
                   style={{ colorScheme: 'dark', accentColor: '#ff3e3e' }}
-                  className="bg-zinc-950/80 border border-white/10 rounded-xl !pl-10 pr-4 py-2 text-[10px] font-black text-white outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red transition-all cursor-pointer box-border h-10 shadow-inner"
+                  className="bg-[var(--theme-surface)]/80 border border-[var(--theme-border)] rounded-xl !pl-10 pr-4 py-2 text-[10px] font-black text-[var(--theme-text)] outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red transition-all cursor-pointer box-border h-10 shadow-inner"
                   value={customRange.end}
                   onClick={(e) => e.target.showPicker?.()}
                   onChange={(e) => setCustomRange({ ...customRange, end: e.target.value })}
@@ -174,9 +174,9 @@ export default function Dashboard() {
             <div className={`p-3 w-fit ${stat.bg} ${stat.color} rounded-2xl mb-4`}>
               <stat.icon size={24} />
             </div>
-            <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest mb-1">{stat.label}</p>
-            <h3 className="text-2xl md:text-3xl font-black text-white italic">{membersLoading ? '...' : stat.value}</h3>
-            <p className="text-[9px] font-black uppercase text-zinc-600 mt-2 tracking-tighter">{stat.delta}</p>
+            <p className="text-[var(--theme-text-muted)] font-bold uppercase text-[10px] tracking-widest mb-1">{stat.label}</p>
+            <h3 className="text-2xl md:text-3xl font-black text-[var(--theme-text)] italic">{membersLoading ? '...' : stat.value}</h3>
+            <p className="text-[9px] font-black uppercase text-[var(--theme-text-muted)] mt-2 tracking-tighter">{stat.delta}</p>
           </div>
         ))}
       </div>
@@ -185,8 +185,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         <div className="lg:col-span-2 card p-6 md:p-8">
           <div className="mb-8 overflow-hidden relative">
-            <h3 className="text-xl font-black uppercase italic tracking-widest text-white">Business Chart</h3>
-            <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">Growth Analytics based on real joined athletes</p>
+            <h3 className="text-xl font-black uppercase italic tracking-widest text-[var(--theme-text)]">Business Chart</h3>
+            <p className="text-[var(--theme-text-muted)] text-[10px] font-bold uppercase tracking-widest">Growth Analytics based on real joined athletes</p>
             <Activity className="absolute right-0 top-0 text-brand-red/10" size={64} />
           </div>
           <div className="h-[250px] md:h-[300px] w-full">
@@ -200,7 +200,7 @@ export default function Dashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                  <XAxis dataKey="name" stroke="#3f3f46" fontSize={10} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" stroke="var(--theme-text-muted)" fontSize={10} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '12px' }}
                     itemStyle={{ color: '#ff3e3e', fontWeight: 'bold' }}
@@ -217,23 +217,23 @@ export default function Dashboard() {
 
         <div className="card p-6 md:p-8">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-black uppercase italic tracking-widest text-white">Latest Joins</h3>
+            <h3 className="text-xl font-black uppercase italic tracking-widest text-[var(--theme-text)]">Latest Joins</h3>
             <Link to="/members" className="text-[10px] font-black uppercase tracking-widest text-brand-red border-b border-brand-red">View List</Link>
           </div>
           <div className="space-y-4">
             {membersLoading ? (
               [1, 2, 3].map(i => <div key={i} className="h-16 bg-zinc-900/50 rounded-2xl animate-pulse"></div>)
             ) : members.slice(0, 5).map((member) => (
-              <div key={member.id} className="flex items-center gap-4 group cursor-pointer border border-white/5 p-3 rounded-2xl hover:bg-white/5 transition-all">
-                <div className="w-12 h-12 bg-zinc-900 rounded-[18px] overflow-hidden flex items-center justify-center font-black text-zinc-800 uppercase italic border border-white/5 shadow-inner">
+              <div key={member.id} className="flex items-center gap-4 group cursor-pointer border border-[var(--theme-border)] p-3 rounded-2xl hover:bg-[var(--theme-surface-soft)]/50 transition-all">
+                <div className="w-12 h-12 bg-[var(--theme-surface-soft)] rounded-[18px] overflow-hidden flex items-center justify-center font-black text-[var(--theme-text-muted)] uppercase italic border border-[var(--theme-border)] shadow-inner">
                   {member.photo_url ? <img src={member.photo_url} className="w-full h-full object-cover" /> : member.full_name?.[0]}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-black text-white italic uppercase tracking-tight leading-none mb-1">{member.full_name || 'Anonymous'}</p>
+                  <p className="text-sm font-black text-[var(--theme-text)] italic uppercase tracking-tight leading-none mb-1">{member.full_name || 'Anonymous'}</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">{member.plan_type} Athlete</p>
-                    <span className="w-1 h-1 rounded-full bg-zinc-800"></span>
-                    <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-none">{format(parseISO(member.joining_date || member.created_at), 'dd MMM')}</p>
+                    <p className="text-[9px] font-bold text-[var(--theme-text-muted)] uppercase tracking-widest">{member.plan_type} Athlete</p>
+                    <span className="w-1 h-1 rounded-full bg-[var(--theme-border)]"></span>
+                    <p className="text-[9px] font-bold text-brand-red uppercase tracking-widest">Joined {format(parseISO(member.joining_date || member.created_at), 'dd MMM')}</p>
                   </div>
                 </div>
               </div>
@@ -243,9 +243,9 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-8 pt-6 border-t border-white/5">
-        <div className="flex items-center gap-2 p-4 bg-zinc-900/50 rounded-2xl border border-white/5">
+        <div className="flex items-center gap-2 p-4 bg-[var(--theme-surface-soft)]/50 rounded-2xl border border-[var(--theme-border)]">
           <div className="p-2 bg-brand-red/20 text-brand-red rounded-lg"><Clock size={16} /></div>
-          <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest font-mono">Next System Snapshot: Tonight 12:00 AM</p>
+          <p className="text-[9px] font-black text-[var(--theme-text-muted)] uppercase tracking-widest font-mono">Next System Snapshot: Tonight 12:00 AM</p>
         </div>
       </div>
     </div>

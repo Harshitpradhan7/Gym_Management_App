@@ -10,9 +10,12 @@ import Login from './pages/Login'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicVerify from './pages/PublicVerify'
 
+import { ThemeProvider } from './context/ThemeContext'
+
 function App() {
   return (
-    <Routes>
+    <ThemeProvider>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/verify/:id" element={<PublicVerify />} />
       <Route
@@ -32,6 +35,7 @@ function App() {
         <Route path="members/edit/:id" element={<EditMember />} />
       </Route>
     </Routes>
+    </ThemeProvider>
   )
 }
 

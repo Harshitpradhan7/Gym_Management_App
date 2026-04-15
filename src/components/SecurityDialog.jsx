@@ -63,7 +63,7 @@ export default function SecurityDialog({ isOpen, onClose, onVerified, title = "S
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                    className="absolute inset-0 bg-black/40 backdrop-blur-md"
                 />
 
                 {/* Modal */}
@@ -71,7 +71,7 @@ export default function SecurityDialog({ isOpen, onClose, onVerified, title = "S
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="relative w-full max-w-sm bg-zinc-950 border border-white/10 rounded-[2.5rem] p-8 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden"
+                    className="relative w-full max-w-sm bg-[var(--theme-surface)] border border-[var(--theme-border)] rounded-[2.5rem] p-8 shadow-2xl overflow-hidden"
                 >
                     {/* Accent Glow */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-brand-red shadow-[0_0_20px_#ff3e3e]"></div>
@@ -81,7 +81,7 @@ export default function SecurityDialog({ isOpen, onClose, onVerified, title = "S
                             <ShieldCheck size={32} strokeWidth={2.5} />
                         </div>
 
-                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-white mb-2">{title}</h3>
+                        <h3 className="text-xl font-black italic uppercase tracking-tighter text-[var(--theme-text)] mb-2">{title}</h3>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-8">Enter Master PIN to Authorize Action</p>
 
                         <form onSubmit={handleSubmit} className="space-y-8">
@@ -96,7 +96,7 @@ export default function SecurityDialog({ isOpen, onClose, onVerified, title = "S
                                         value={digit}
                                         onChange={(e) => handleChange(i, e.target.value)}
                                         onKeyDown={(e) => handleKeyDown(i, e)}
-                                        className={`w-14 h-16 bg-zinc-900 border ${error ? 'border-rose-500 animate-shake' : 'border-white/5'} rounded-2xl text-center text-2xl font-black text-white focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 outline-none transition-all shadow-inner`}
+                                        className={`w-14 h-16 bg-[var(--theme-surface-soft)] border ${error ? 'border-rose-500 animate-shake' : 'border-[var(--theme-border)]'} rounded-2xl text-center text-2xl font-black text-[var(--theme-text)] focus:border-brand-red focus:ring-4 focus:ring-brand-red/10 outline-none transition-all shadow-inner`}
                                     />
                                 ))}
                             </div>
@@ -116,7 +116,7 @@ export default function SecurityDialog({ isOpen, onClose, onVerified, title = "S
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 py-4 rounded-2xl bg-zinc-900 border border-white/5 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-all"
+                                    className="flex-1 py-4 rounded-2xl bg-[var(--theme-surface-soft)] border border-[var(--theme-border)] text-[10px] font-black uppercase tracking-widest text-[var(--theme-text-muted)] hover:text-brand-red transition-all"
                                 >
                                     Cancel
                                 </button>

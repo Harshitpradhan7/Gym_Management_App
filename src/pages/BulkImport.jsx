@@ -84,13 +84,38 @@ export default function BulkImport() {
 
   const uploadMutation = useMutation({
     mutationFn: async (membersToUpload) => {
-      const { data: result, error } = await supabase
+      // 1. Bulk Insert Members
+      const { data: insertedMembers, error: memberError } = await supabase
         .from('members')
         .insert(membersToUpload)
         .select()
 
-      if (error) throw error
-      return result
+      if (memberError) throw memberError
+
+      // 2. Map and Bulk Insert Initial Payments
+      const paymentsToUpload = insertedMembers.map(member => {
+        // Find the original data to get the joining_date
+        const originalData = membersToUpload.find(m => m.registration_no === member.registration_no)
+
+        return {
+          member_id: member.id,
+          amount: member.fees_paid,
+          plan_type: member.plan_type,
+          payment_mode: member.payment_mode,
+          expiry_date_after_payment: member.expiry_date,
+          payment_date: originalData?.joining_date || new Date().toISOString().split('T')[0]
+        }
+      })
+
+      if (paymentsToUpload.length > 0) {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert(paymentsToUpload)
+
+        if (paymentError) throw paymentError
+      }
+
+      return insertedMembers
     },
     onSuccess: (data) => {
       setSuccess(data.length)
